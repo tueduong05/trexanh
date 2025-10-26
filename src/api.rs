@@ -41,11 +41,9 @@ pub async fn fetch_contributions(token: &str, username: &str) -> Result<Contribu
 
     let calendar_value =
         response["data"]["user"]["contributionsCollection"]["contributionCalendar"].clone();
-
     if calendar_value.is_null() {
         anyhow::bail!("Missing contributionCalendar field in response");
     }
-
     let calendar: ContributionCalendar = serde_json::from_value(calendar_value)
         .context("Failed to deserialize contribution calendar")?;
 
