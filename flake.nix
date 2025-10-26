@@ -30,9 +30,6 @@
     devShells = forEachSupportedSystem ({pkgs}: {
       default = pkgs.mkShell {
         packages = with pkgs; [
-          openssl
-          pkg-config
-
           cargo-audit
           cargo-deny
           cargo-edit
