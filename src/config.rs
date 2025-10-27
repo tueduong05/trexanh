@@ -12,7 +12,7 @@ impl Config {
     fn path() -> Result<PathBuf> {
         let home = env::var("HOME").context("HOME environment variable not set")?;
 
-        Ok(PathBuf::from(home).join(".trexanh"))
+        Ok(PathBuf::from(home).join(".trexanh").join("config.json"))
     }
 
     pub fn exists() -> bool {

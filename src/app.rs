@@ -4,7 +4,7 @@ use crate::models::ContributionCalendar;
 use anyhow::Result;
 use std::time::{Duration, Instant};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(PartialEq)]
 pub enum AppMode {
     Single,
     Watch,
@@ -35,14 +35,13 @@ impl App {
     }
 
     pub async fn refresh(&mut self) -> Result<()> {
-        if self.mode == AppMode::Watch {
-            if self
+        if self.mode == AppMode::Watch
+            && self
                 .last_update
                 .map(|t| t.elapsed() > Duration::from_secs(300))
                 .unwrap_or(true)
-            {
-                self.load().await?;
-            }
+        {
+            self.load().await?;
         }
         Ok(())
     }

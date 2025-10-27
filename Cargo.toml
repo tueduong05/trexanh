@@ -1,10 +1,11 @@
 [package]
 name = "trexanh"
-version = "0.1.0"
+version = "0.5.0"
 edition = "2024"
 
 [dependencies]
 anyhow = "1.0.100"
+chrono = { version = "0.4.42", features = ["serde"] }
 crossterm = "0.29.0"
 openssl = { version = "0.10.74", features = ["vendored"] }
 ratatui = "0.29.0"
