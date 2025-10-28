@@ -18,5 +18,6 @@ and input your GitHub username and token
 
 ## Roadmap
 
+- [ ] Add async cache with background fetch (fork) to display cached data instantly and refresh in the background (cached mode)
 - [ ] Add watch mode to refresh graph at intervals
 - [ ] Add TUI for username and token input
