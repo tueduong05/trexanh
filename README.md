@@ -2,6 +2,8 @@
 
 > trexanh is a GitHub contribution graph TUI, written in 🦀 Rust :))
 
+<img src="assets/demo.jpg">
+
 ## How to use
 
 ### 1. Download the binary
