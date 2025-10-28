@@ -46,6 +46,8 @@ async fn main() -> Result<()> {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
+    terminal.clear()?;
+
     terminal.draw(|frame| {
         ui::render(frame, &app);
     })?;

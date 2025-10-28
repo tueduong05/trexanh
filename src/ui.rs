@@ -61,7 +61,7 @@ pub fn render(frame: &mut Frame, app: &App) {
 
     let calendar_area = Rect {
         x: area.x + (area.width.saturating_sub(calendar_width + 2)) / 2,
-        y: area.y + (area.height.saturating_sub(calendar_height + 2)) / 2,
+        y: area.y,
         width: calendar_width + 2,
         height: calendar_height + 2,
     };
