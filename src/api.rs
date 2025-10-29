@@ -11,8 +11,8 @@ pub async fn fetch_contributions(token: &str, username: &str) -> Result<Contribu
                         totalContributions
                         weeks {
                             contributionDays {
-                                contributionCount
                                 date
+                                contributionCount
                             }
                         }
                     }

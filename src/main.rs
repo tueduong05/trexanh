@@ -1,22 +1,42 @@
 use crate::app::{App, AppMode};
+use crate::background::spawn_cache_updater;
+use crate::cache::Cache;
 use crate::config::Config;
 use anyhow::Result;
+use clap::Parser;
 use ratatui::{
     Terminal,
     crossterm::terminal::{disable_raw_mode, enable_raw_mode},
     prelude::CrosstermBackend,
 };
-use std::{io, io::Write};
+use std::io::{self, Write};
 
 mod api;
 mod app;
+mod background;
+mod cache;
 mod config;
 mod models;
 mod ui;
 
+#[derive(Parser)]
+#[command(name = "trexanh")]
+#[command(about = "GitHub Contribution Graph TUI")]
+struct Args {
+    #[arg(long)]
+    cached: bool,
+
+    #[arg(long, hide = true)]
+    update_cache: bool,
+
+    username: Option<String>,
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
-    let config = if Config::exists() {
+    let args = Args::parse();
+
+    let mut config = if Config::exists() {
         Config::load()?
     } else {
         let mut username = String::new();
@@ -38,21 +58,67 @@ async fn main() -> Result<()> {
         config
     };
 
-    let mut app = App::new(config, AppMode::Single);
-    app.load().await?;
+    config.username = args
+        .username
+        .as_deref()
+        .unwrap_or(&config.username)
+        .to_string();
 
-    enable_raw_mode()?;
-    let stdout = io::stdout();
-    let backend = CrosstermBackend::new(stdout);
-    let mut terminal = Terminal::new(backend)?;
+    if args.update_cache {
+        let mut app = App::new(config.clone(), AppMode::Single);
+        app.load().await?;
+        if let Some(calendar) = app.calendar {
+            let mut cache = Cache::load()?;
+            cache.insert(config.username, calendar);
+            cache.save()?;
+        }
+        return Ok(());
+    }
 
-    terminal.clear()?;
+    let mut cache = Cache::load()?;
 
-    terminal.draw(|frame| {
-        ui::render(frame, &app);
-    })?;
+    if args.cached {
+        let mut app = App::new(config.clone(), AppMode::Single);
 
-    disable_raw_mode()?;
+        if let Some(calendar) = cache.get(&config.username) {
+            app.calendar = Some(calendar);
+
+            spawn_cache_updater(&config.username)?;
+        } else {
+            app.load().await?;
+
+            if let Some(ref calendar) = app.calendar {
+                cache.insert(config.username, calendar.clone());
+                cache.save()?;
+            }
+        }
+
+        enable_raw_mode()?;
+        let stdout = io::stdout();
+        let backend = CrosstermBackend::new(stdout);
+        let mut terminal = Terminal::new(backend)?;
+
+        terminal.clear()?;
+        terminal.draw(|frame| ui::render(frame, &app))?;
+        disable_raw_mode()?;
+    } else {
+        let mut app = App::new(config.clone(), AppMode::Single);
+        app.load().await?;
+
+        if let Some(ref calendar) = app.calendar {
+            cache.insert(config.username, calendar.clone());
+            cache.save()?;
+        }
+
+        enable_raw_mode()?;
+        let stdout = io::stdout();
+        let backend = CrosstermBackend::new(stdout);
+        let mut terminal = Terminal::new(backend)?;
+
+        terminal.clear()?;
+        terminal.draw(|frame| ui::render(frame, &app))?;
+        disable_raw_mode()?;
+    }
 
     Ok(())
 }
