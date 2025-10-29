@@ -4,17 +4,43 @@
 
 <img src="assets/demo.jpg">
 
-## How to use
+## Installation & Usage
 
 ### 1. Download the binary
+
+Download the latest release of `trexanh` for your platform
+
 ### 2. Make it executable
-- Run `chmod +x trexanh`
-### 3. Get a GitHub fine-grained access token with the Public Repositories permission
+
+```bash
+chmod +x trexanh
+```
+
+### 3. Get a GitHub fine-grained personal access token
+
+1. Go to [GitHub Settings > Developer settings > Personal access tokens > Fine-grained tokens]
+2. Click "Generate new token"
+3. Give your token a name and set an expiration date
+4. Under "Repository access", select **Public repositories**
+5. Click "Generate token" and copy it
+
 ### 4. Run
+
+#### Basic usage
+
 ```bash
 ./trexanh
 ```
 and input your GitHub username and token
+
+#### With flags
+
+```bash
+./trexanh --cached
+```
+this flag will instantly display the cached contributions while fetching new data for the next run in the background
+
+> You can optionally input a different username to see their contributions
 
 ## Roadmap
 
