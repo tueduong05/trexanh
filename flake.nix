@@ -24,7 +24,6 @@
     overlays.default = final: prev: {
       rustToolchain = prev.rust-bin.stable.latest.default.override {
         extensions = ["rust-src" "rustfmt"];
-        targets = ["x86_64-unknown-linux-musl"];
       };
     };
 
@@ -38,7 +37,7 @@
           rust-analyzer
           rustToolchain
 
-          pkgsCross.musl64.buildPackages.gcc
+          git-cliff
         ];
 
         env = {

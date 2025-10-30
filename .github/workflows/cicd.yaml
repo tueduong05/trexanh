@@ -1,0 +1,173 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  release:
+    types: [created]
+
+env:
+  CARGO_TERM_COLOR: always
+
+permissions:
+  contents: write
+
+jobs:
+  check-fmt-lint:
+    name: Check, format and lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+
+      - name: Cargo check
+        run: cargo check --all-targets --all-features
+
+      - name: Cargo fmt
+        run: cargo fmt --all -- --check
+
+      - name: Clippy lint
+        run: cargo clippy --all-targets --all-features -- -D warnings -A dead_code
+
+  audit:
+    name: Security audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+
+      - name: Audit
+        run: |
+          cargo install cargo-audit
+          cargo audit --deny warnings
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+
+      - name: Tests
+        run: cargo test --all-features
+
+  build:
+    name: Build - ${{ matrix.platform.target }}
+    runs-on: ${{ matrix.platform.os }}
+    needs: [check-fmt-lint, audit, test]
+    strategy:
+      matrix:
+        platform:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            bin: trexanh
+            name: trexanh-linux-x86_64.tar.gz
+
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            bin: trexanh
+            name: trexanh-linux-aarch64.tar.gz
+
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            bin: trexanh
+            name: trexanh-macos-x86_64.tar.gz
+
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            bin: trexanh
+            name: trexanh-macos-aarch64.tar.gz
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform.target }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.platform.target }}
+
+      - name: Install cross-compilation tools
+        if: matrix.platform.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+
+      - name: Build release binary
+        run: cargo build --release --target ${{ matrix.platform.target }}
+
+      - name: Strip binary
+        run: strip target/${{ matrix.platform.target }}/release/${{ matrix.platform.bin }}
+
+      - name: Package as archive
+        run: |
+          cd target/${{ matrix.platform.target }}/release
+          tar czf ../../../${{ matrix.platform.name }} ${{ matrix.platform.bin }}
+          cd -
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: ${{ matrix.platform.name }}
+          path: ${{ matrix.platform.name }}
+
+  release:
+    name: Publish release
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    needs: [build]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Generate changelog
+        run: |
+          cargo install git-cliff
+          git cliff --latest --strip header > changelog.md
+
+      - name: Publish release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*
+          body_path: changelog.md
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
