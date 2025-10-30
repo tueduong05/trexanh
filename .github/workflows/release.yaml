@@ -1,14 +1,11 @@
-name: CI/CD
+name: Release
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+    tags:
+      - "v*"
   release:
-    types: [created]
+    types: [published]
 
 env:
   CARGO_TERM_COLOR: always
@@ -157,7 +154,6 @@ jobs:
   release:
     name: Publish release
     runs-on: ubuntu-latest
-    if: github.event_name == 'release'
     needs: [build]
     steps:
       - name: Checkout
