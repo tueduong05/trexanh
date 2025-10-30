@@ -116,14 +116,17 @@ jobs:
         with:
           key: ${{ matrix.platform.target }}
 
-      - name: Install cross-compilation tools
+      - name: Install cross
         if: matrix.platform.target == 'aarch64-unknown-linux-gnu'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu
+        run: cargo install cross --git https://github.com/cross-rs/cross
 
       - name: Build release binary
-        run: cargo build --release --target ${{ matrix.platform.target }}
+        run: |
+          if [[ "${{ matrix.platform.target }}" == "aarch64-unknown-linux-gnu" ]]; then
+            cross build --release --target ${{ matrix.platform.target }}
+          else
+            cargo build --release --target ${{ matrix.platform.target }}
+          fi
 
       - name: Strip binary
         run: strip target/${{ matrix.platform.target }}/release/${{ matrix.platform.bin }}
