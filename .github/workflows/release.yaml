@@ -14,68 +14,9 @@ permissions:
   contents: write
 
 jobs:
-  check-fmt-lint:
-    name: Check, format and lint
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy, rustfmt
-
-      - name: Rust cache
-        uses: swatinem/rust-cache@v2
-
-      - name: Cargo check
-        run: cargo check --all-targets --all-features
-
-      - name: Cargo fmt
-        run: cargo fmt --all -- --check
-
-      - name: Clippy lint
-        run: cargo clippy --all-targets --all-features -- -D warnings -A dead_code
-
-  audit:
-    name: Security audit
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Rust cache
-        uses: swatinem/rust-cache@v2
-
-      - name: Audit
-        run: |
-          cargo install cargo-audit
-          cargo audit --deny warnings
-
-  test:
-    name: Tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Rust cache
-        uses: swatinem/rust-cache@v2
-
-      - name: Tests
-        run: cargo test --all-features
-
   build:
     name: Build - ${{ matrix.platform.target }}
     runs-on: ${{ matrix.platform.os }}
-    needs: [check-fmt-lint, audit, test]
     strategy:
       matrix:
         platform:
@@ -113,9 +54,12 @@ jobs:
         with:
           key: ${{ matrix.platform.target }}
 
+      - name: Install cargo binstall
+        uses: cargo-bins/cargo-binstall@main
+
       - name: Install cross
         if: matrix.platform.target == 'aarch64-unknown-linux-gnu'
-        run: cargo install cross --git https://github.com/cross-rs/cross
+        run: cargo binstall cross --git https://github.com/cross-rs/cross
 
       - name: Build release binary
         run: |
@@ -164,6 +108,12 @@ jobs:
       - name: Install rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+
+      - name: Install cargo binstall
+        uses: cargo-bins/cargo-binstall@main
+
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
@@ -171,7 +121,7 @@ jobs:
 
       - name: Generate changelog
         run: |
-          cargo install git-cliff
+          cargo binstall git-cliff
           git cliff --latest --strip header > changelog.md
 
       - name: Publish release assets

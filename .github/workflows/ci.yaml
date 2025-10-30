@@ -51,9 +51,12 @@ jobs:
       - name: Rust cache
         uses: swatinem/rust-cache@v2
 
+      - name: Install cargo binstall
+        uses: cargo-bins/cargo-binstall@main
+
       - name: Audit
         run: |
-          cargo install cargo-audit
+          cargo binstall cargo-audit
           cargo audit --deny warnings
 
   test:
