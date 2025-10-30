@@ -128,8 +128,19 @@ jobs:
             cargo build --release --target ${{ matrix.platform.target }}
           fi
 
+      - name: Install binutils for ARM64
+        if: matrix.platform.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y binutils-aarch64-linux-gnu
+
       - name: Strip binary
-        run: strip target/${{ matrix.platform.target }}/release/${{ matrix.platform.bin }}
+        run: |
+          if [[ "${{ matrix.platform.target }}" == "aarch64-unknown-linux-gnu" ]]; then
+            aarch64-linux-gnu-strip target/${{ matrix.platform.target }}/release/${{ matrix.platform.bin }}
+          else
+            strip target/${{ matrix.platform.target }}/release/${{ matrix.platform.bin }}
+          fi
 
       - name: Package as archive
         run: |
