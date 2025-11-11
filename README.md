@@ -40,11 +40,16 @@ and input your GitHub username and token
 ```
 this flag will instantly display the cached contributions while fetching new data for the next run in the background
 
+```bash
+./trexanh --watch <SECONDS>
+```
+this flag will continuously fetch and update contributions (**DO NOT** use very short intervals to avoid hammering the GitHub API)
+
 > You can optionally input a different username to see their contributions
 
 ## Roadmap
 
 - [x] Add argument to get other username's contribution graph
 - [x] Add async cache with background fetch (fork) to display cached data instantly and refresh in the background (cached mode)
-- [ ] Add watch mode to refresh graph at intervals
+- [x] Add watch mode to refresh graph at intervals
 - [ ] Add TUI for username and token input
