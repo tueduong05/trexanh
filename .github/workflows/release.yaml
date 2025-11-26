@@ -57,7 +57,7 @@ jobs:
 
       - name: Install cross
         if: matrix.platform.target == 'aarch64-unknown-linux-gnu'
-        run: cargo binstall cross --git https://github.com/cross-rs/cross
+        run: cargo binstall --force cross --git https://github.com/cross-rs/cross
 
       - name: Build release binary
         run: |
@@ -119,7 +119,7 @@ jobs:
 
       - name: Generate changelog
         run: |
-          cargo binstall git-cliff
+          cargo binstall --force git-cliff
           git cliff --latest --strip header > changelog.md
 
       - name: Publish release assets

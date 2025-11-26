@@ -56,7 +56,7 @@ jobs:
 
       - name: Audit
         run: |
-          cargo binstall cargo-audit
+          cargo binstall --force cargo-audit
           cargo audit --deny warnings
 
   test:
