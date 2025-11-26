@@ -4,8 +4,6 @@ on:
   push:
     tags:
       - "v*"
-  release:
-    types: [published]
 
 env:
   CARGO_TERM_COLOR: always
@@ -129,5 +127,6 @@ jobs:
         with:
           files: artifacts/**/*
           body_path: changelog.md
+          draft: true
         env:
           GITHUB_TOKEN: ${{ github.token }}
