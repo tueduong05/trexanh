@@ -2,7 +2,7 @@ use crate::app::App;
 use chrono::{Datelike, NaiveDate};
 use ratatui::{
     Frame,
-    layout::{Alignment, Rect},
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, Paragraph, Wrap},
@@ -36,7 +36,18 @@ pub fn render(frame: &mut Frame, app: &App) {
             .alignment(Alignment::Center)
             .wrap(Wrap { trim: false });
 
-        frame.render_widget(paragraph, area);
+        let chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Fill(1),
+                Constraint::Length(4),
+                Constraint::Fill(1),
+            ])
+            .split(area);
+
+        let centered = chunks[1];
+
+        frame.render_widget(paragraph, centered);
         return;
     }
 

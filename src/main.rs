@@ -159,8 +159,6 @@ async fn main() -> Result<()> {
                     _ => {}
                 }
             }
-
-            sleep(Duration::from_millis(50)).await;
         }
     } else {
         terminal.draw(|frame| ui::render(frame, &app))?;
