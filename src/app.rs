@@ -3,8 +3,15 @@ use crate::config::Config;
 use crate::models::ContributionCalendar;
 use anyhow::Result;
 
+#[derive(PartialEq)]
+pub enum Focus {
+    Username,
+    Token,
+}
+
 pub struct App {
     pub config: Config,
+    pub focus: Focus,
     pub calendar: Option<ContributionCalendar>,
 }
 
@@ -12,6 +19,7 @@ impl App {
     pub fn new(config: Config) -> Self {
         Self {
             config,
+            focus: Focus::Username,
             calendar: None,
         }
     }

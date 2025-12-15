@@ -52,4 +52,4 @@ this flag will continuously fetch and update contributions (**DO NOT** use very 
 - [x] Add argument to get other username's contribution graph
 - [x] Add async cache with background fetch (fork) to display cached data instantly and refresh in the background (cached mode)
 - [x] Add watch mode to refresh graph at intervals
-- [ ] Add TUI for username and token input
+- [x] Add TUI for username and token input

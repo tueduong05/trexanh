@@ -1,12 +1,153 @@
-use crate::app::App;
+use crate::app::{App, Focus};
 use chrono::{Datelike, NaiveDate};
 use ratatui::{
     Frame,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, Paragraph, Wrap},
+    widgets::{Block, BorderType, Borders, Paragraph, Wrap},
 };
+
+fn render_error(frame: &mut Frame, area: Rect, min_width: u16, min_height: u16) {
+    let error_message = vec![
+        Line::from(Span::styled(
+            "Terminal too small!",
+            Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+        )),
+        Line::from(""),
+        Line::from(Span::styled(
+            format!("Minimum size: {}x{}", min_width, min_height),
+            Style::default().fg(Color::White),
+        )),
+        Line::from(Span::styled(
+            format!("Current size: {}x{}", area.width, area.height),
+            Style::default().fg(Color::White),
+        )),
+    ];
+
+    let paragraph = Paragraph::new(error_message)
+        .style(Style::default().fg(Color::White))
+        .alignment(Alignment::Center)
+        .wrap(Wrap { trim: false });
+
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Fill(1),
+            Constraint::Length(4),
+            Constraint::Fill(1),
+        ])
+        .split(area);
+
+    let centered = chunks[1];
+
+    frame.render_widget(paragraph, centered);
+}
+
+pub fn render_input(frame: &mut Frame, app: &App) {
+    const MIN_WIDTH: u16 = 30;
+    const MIN_HEIGHT: u16 = 12;
+
+    let area = frame.area();
+
+    if area.width < MIN_WIDTH || area.height < MIN_HEIGHT {
+        render_error(frame, area, MIN_WIDTH, MIN_HEIGHT);
+        return;
+    }
+
+    const INPUT_WIDTH: u16 = 50;
+
+    let chunks = Layout::horizontal([
+        Constraint::Fill(1),
+        Constraint::Length(INPUT_WIDTH),
+        Constraint::Fill(1),
+    ])
+    .split(area);
+
+    let vertical = Layout::vertical([
+        Constraint::Fill(1),
+        Constraint::Length(10),
+        Constraint::Fill(1),
+    ])
+    .split(chunks[1]);
+
+    let centered = vertical[1];
+
+    let layout = Layout::vertical([
+        Constraint::Fill(1),
+        Constraint::Length(3),
+        Constraint::Length(3),
+        Constraint::Fill(1),
+    ])
+    .split(centered);
+
+    let input_user = layout[1];
+    let input_token = layout[2];
+
+    fn calculate_view(text: &str, width: u16) -> (usize, &str) {
+        let usable_width = width.saturating_sub(4) as usize;
+        let len = text.len();
+
+        let offset = if len > usable_width {
+            len - usable_width
+        } else {
+            0
+        };
+
+        (offset, &text[offset..])
+    }
+
+    let (user_offset, user_visible) = calculate_view(&app.config.username, input_user.width);
+
+    let user_style = if app.focus == Focus::Username {
+        Style::default()
+            .fg(Color::White)
+            .add_modifier(Modifier::BOLD)
+    } else {
+        Style::default().fg(Color::DarkGray)
+    };
+
+    let username_block = Block::bordered()
+        .title(" Username ")
+        .border_type(BorderType::Plain)
+        .style(user_style);
+
+    frame.render_widget(
+        Paragraph::new(format!(" {}", user_visible)).block(username_block),
+        input_user,
+    );
+
+    let (token_offset, token_visible) = calculate_view(&app.config.token, input_token.width);
+
+    let token_style = if app.focus == Focus::Token {
+        Style::default()
+            .fg(Color::White)
+            .add_modifier(Modifier::BOLD)
+    } else {
+        Style::default().fg(Color::DarkGray)
+    };
+
+    let token_block = Block::bordered()
+        .title(" Token ")
+        .border_type(BorderType::Plain)
+        .style(token_style);
+
+    frame.render_widget(
+        Paragraph::new(format!(" {}", token_visible)).block(token_block),
+        input_token,
+    );
+
+    match app.focus {
+        Focus::Username => frame.set_cursor_position((
+            input_user.x + 2 + (app.config.username.len() - user_offset) as u16,
+            input_user.y + 1,
+        )),
+        Focus::Token => frame.set_cursor_position((
+            input_token.x + 2 + (app.config.token.len() - token_offset) as u16,
+            input_token.y + 1,
+        )),
+    }
+}
 
 pub fn render(frame: &mut Frame, app: &App) {
     const MIN_WIDTH: u16 = 30;
@@ -15,39 +156,7 @@ pub fn render(frame: &mut Frame, app: &App) {
     let area = frame.area();
 
     if area.width < MIN_WIDTH || area.height < MIN_HEIGHT {
-        let error_message = vec![
-            Line::from(Span::styled(
-                "Terminal too small!",
-                Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
-            )),
-            Line::from(""),
-            Line::from(Span::styled(
-                format!("Minimum size: {}x{}", MIN_WIDTH, MIN_HEIGHT),
-                Style::default().fg(Color::White),
-            )),
-            Line::from(Span::styled(
-                format!("Current size: {}x{}", area.width, area.height),
-                Style::default().fg(Color::White),
-            )),
-        ];
-
-        let paragraph = Paragraph::new(error_message)
-            .style(Style::default().fg(Color::White))
-            .alignment(Alignment::Center)
-            .wrap(Wrap { trim: false });
-
-        let chunks = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints([
-                Constraint::Fill(1),
-                Constraint::Length(4),
-                Constraint::Fill(1),
-            ])
-            .split(area);
-
-        let centered = chunks[1];
-
-        frame.render_widget(paragraph, centered);
+        render_error(frame, area, MIN_WIDTH, MIN_HEIGHT);
         return;
     }
 
@@ -78,7 +187,7 @@ pub fn render(frame: &mut Frame, app: &App) {
     };
 
     let block = Block::default()
-        .title(format!("trexanh - @{}", app.config.username))
+        .title(format!(" trexanh - @{} ", app.config.username))
         .borders(Borders::ALL)
         .style(Style::default().fg(Color::White));
 

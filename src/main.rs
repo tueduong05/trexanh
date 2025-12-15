@@ -1,4 +1,4 @@
-use crate::app::App;
+use crate::app::{App, Focus};
 use crate::background::spawn_cache_updater;
 use crate::cache::Cache;
 use crate::config::Config;
@@ -8,12 +8,14 @@ use ratatui::{
     Terminal,
     crossterm::{
         event::{self, Event, KeyCode},
-        terminal::{disable_raw_mode, enable_raw_mode},
+        execute,
+        terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
     },
     prelude::CrosstermBackend,
 };
 use std::{
-    io::{self, Write},
+    io::{self},
+    process,
     sync::Arc,
     time::Duration,
 };
@@ -49,22 +51,69 @@ async fn main() -> Result<()> {
     let mut config = if Config::exists() {
         Config::load()?
     } else {
-        let mut username = String::new();
-        let mut token = String::new();
+        enable_raw_mode()?;
+        let mut stdout = io::stdout();
+        execute!(stdout, EnterAlternateScreen)?;
+        let backend = CrosstermBackend::new(stdout);
+        let mut terminal = Terminal::new(backend)?;
 
-        print!("GitHub username: ");
-        io::stdout().flush()?;
-        io::stdin().read_line(&mut username)?;
-        print!("GitHub token: ");
-        io::stdout().flush()?;
-        io::stdin().read_line(&mut token)?;
-
-        let config = Config {
-            username: username.trim().to_string(),
-            token: token.trim().to_string(),
+        let mut config = Config {
+            username: "".to_string(),
+            token: "".to_string(),
         };
+        let mut app = App::new(config.clone());
 
-        config.save()?;
+        loop {
+            terminal.draw(|frame| ui::render_input(frame, &app))?;
+
+            if event::poll(Duration::from_millis(200))? {
+                if let Event::Key(key) = event::read()? {
+                    match key.code {
+                        KeyCode::Tab => {
+                            app.focus = match app.focus {
+                                Focus::Username => Focus::Token,
+                                Focus::Token => Focus::Username,
+                            };
+                        }
+
+                        KeyCode::Enter => {
+                            config.username = app.config.username.trim().to_string();
+                            config.token = app.config.token.trim().to_string();
+
+                            if !config.username.is_empty() && !config.token.is_empty() {
+                                config.save()?;
+                                break;
+                            }
+                        }
+
+                        KeyCode::Char(c) => {
+                            let target = match app.focus {
+                                Focus::Username => &mut app.config.username,
+                                Focus::Token => &mut app.config.token,
+                            };
+                            target.push(c);
+                        }
+
+                        KeyCode::Backspace => {
+                            let target = match app.focus {
+                                Focus::Username => &mut app.config.username,
+                                Focus::Token => &mut app.config.token,
+                            };
+                            target.pop();
+                        }
+
+                        KeyCode::Esc => {
+                            disable_raw_mode()?;
+                            execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+                            process::exit(0);
+                        }
+
+                        _ => {}
+                    }
+                }
+            }
+        }
+
         config
     };
 
