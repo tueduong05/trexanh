@@ -66,8 +66,8 @@ async fn main() -> Result<()> {
         loop {
             terminal.draw(|frame| ui::render_input(frame, &app))?;
 
-            if event::poll(Duration::from_millis(200))? {
-                if let Event::Key(key) = event::read()? {
+            if event::poll(Duration::from_millis(200))?
+                && let Event::Key(key) = event::read()? {
                     match key.code {
                         KeyCode::Tab => {
                             app.focus = match app.focus {
@@ -111,7 +111,6 @@ async fn main() -> Result<()> {
                         _ => {}
                     }
                 }
-            }
         }
 
         config

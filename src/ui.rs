@@ -88,11 +88,7 @@ pub fn render_input(frame: &mut Frame, app: &App) {
         let usable_width = width.saturating_sub(4) as usize;
         let len = text.len();
 
-        let offset = if len > usable_width {
-            len - usable_width
-        } else {
-            0
-        };
+        let offset = len.saturating_sub(usable_width);
 
         (offset, &text[offset..])
     }
