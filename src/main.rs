@@ -67,50 +67,51 @@ async fn main() -> Result<()> {
             terminal.draw(|frame| ui::render_input(frame, &app))?;
 
             if event::poll(Duration::from_millis(200))?
-                && let Event::Key(key) = event::read()? {
-                    match key.code {
-                        KeyCode::Tab => {
-                            app.focus = match app.focus {
-                                Focus::Username => Focus::Token,
-                                Focus::Token => Focus::Username,
-                            };
-                        }
-
-                        KeyCode::Enter => {
-                            config.username = app.config.username.trim().to_string();
-                            config.token = app.config.token.trim().to_string();
-
-                            if !config.username.is_empty() && !config.token.is_empty() {
-                                config.save()?;
-                                break;
-                            }
-                        }
-
-                        KeyCode::Char(c) => {
-                            let target = match app.focus {
-                                Focus::Username => &mut app.config.username,
-                                Focus::Token => &mut app.config.token,
-                            };
-                            target.push(c);
-                        }
-
-                        KeyCode::Backspace => {
-                            let target = match app.focus {
-                                Focus::Username => &mut app.config.username,
-                                Focus::Token => &mut app.config.token,
-                            };
-                            target.pop();
-                        }
-
-                        KeyCode::Esc => {
-                            disable_raw_mode()?;
-                            execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
-                            process::exit(0);
-                        }
-
-                        _ => {}
+                && let Event::Key(key) = event::read()?
+            {
+                match key.code {
+                    KeyCode::Tab => {
+                        app.focus = match app.focus {
+                            Focus::Username => Focus::Token,
+                            Focus::Token => Focus::Username,
+                        };
                     }
+
+                    KeyCode::Enter => {
+                        config.username = app.config.username.trim().to_string();
+                        config.token = app.config.token.trim().to_string();
+
+                        if !config.username.is_empty() && !config.token.is_empty() {
+                            config.save()?;
+                            break;
+                        }
+                    }
+
+                    KeyCode::Char(c) => {
+                        let target = match app.focus {
+                            Focus::Username => &mut app.config.username,
+                            Focus::Token => &mut app.config.token,
+                        };
+                        target.push(c);
+                    }
+
+                    KeyCode::Backspace => {
+                        let target = match app.focus {
+                            Focus::Username => &mut app.config.username,
+                            Focus::Token => &mut app.config.token,
+                        };
+                        target.pop();
+                    }
+
+                    KeyCode::Esc => {
+                        disable_raw_mode()?;
+                        execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+                        process::exit(0);
+                    }
+
+                    _ => {}
                 }
+            }
         }
 
         config
