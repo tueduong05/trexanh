@@ -41,6 +41,9 @@ struct Args {
     #[arg(long)]
     watch: Option<u64>,
 
+    #[arg(long)]
+    reset: bool,
+
     username: Option<String>,
 }
 
@@ -48,7 +51,7 @@ struct Args {
 async fn main() -> Result<()> {
     let args = Args::parse();
 
-    let mut config = if Config::exists() {
+    let mut config = if Config::exists() && !args.reset {
         Config::load()?
     } else {
         enable_raw_mode()?;
