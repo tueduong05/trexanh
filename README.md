@@ -45,6 +45,11 @@ this flag will instantly display the cached contributions while fetching new dat
 ```
 this flag will continuously fetch and update contributions (**DO NOT** use very short intervals to avoid hammering the GitHub API)
 
+```bash
+./trexanh --reset
+```
+this flag will prompt you to update your stored username and token
+
 > You can optionally input a different username to see their contributions
 
 ## Roadmap
