@@ -30,12 +30,17 @@
     packages = forEachSupportedSystem ({pkgs}: {
       default = pkgs.rustPlatform.buildRustPackage {
         pname = "trexanh";
-        version = "0.9.1";
+        version = "0.9.2";
         src = ./.;
 
-        cargoHash = "sha256-fhipxHvGllBuMSAgq46HIYoV0lZZpD0FhVO/p4qUJvs=";
+        cargoHash = "sha256-t0vjyKpi2lwzsqEAAi4Do0YIwfLse/rVIgmUodswq3o=";
 
-        nativeBuildInputs = with pkgs; [perl rustToolchain];
+        nativeBuildInputs = with pkgs; [perl rustToolchain removeReferencesTo];
+
+        postInstall = ''
+          remove-references-to -t ${pkgs.perl} $out/bin/trexanh
+          remove-references-to -t ${pkgs.rustToolchain} $out/bin/trexanh
+        '';
       };
     });
 
