@@ -30,7 +30,7 @@
     packages = forEachSupportedSystem ({pkgs}: {
       default = pkgs.rustPlatform.buildRustPackage {
         pname = "trexanh";
-        version = "0.9.0";
+        version = "0.9.1";
         src = ./.;
 
         cargoHash = "sha256-fhipxHvGllBuMSAgq46HIYoV0lZZpD0FhVO/p4qUJvs=";
