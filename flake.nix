@@ -35,11 +35,11 @@
 
         cargoHash = "sha256-t0vjyKpi2lwzsqEAAi4Do0YIwfLse/rVIgmUodswq3o=";
 
-        nativeBuildInputs = with pkgs; [perl rustToolchain removeReferencesTo];
+        nativeBuildInputs = with pkgs; [rustToolchain removeReferencesTo];
 
         postInstall = ''
-          remove-references-to -t ${pkgs.perl} $out/bin/trexanh
           remove-references-to -t ${pkgs.rustToolchain} $out/bin/trexanh
+          strip $out/bin/*
         '';
       };
     });
