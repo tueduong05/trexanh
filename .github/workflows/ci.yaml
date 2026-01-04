@@ -36,7 +36,7 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: Clippy lint
-        run: cargo clippy --all-targets --all-features -- -D warnings -A dead_code
+        run: cargo clippy --all-targets --all-features -- -D warnings
 
   audit:
     name: Security audit
