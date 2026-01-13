@@ -33,7 +33,7 @@
         version = "0.9.3";
         src = ./.;
 
-        cargoHash = "sha256-t0vjyKpi2lwzsqEAAi4Do0YIwfLse/rVIgmUodswq3o=";
+        cargoHash = "sha256-xDizikwqqWLFGepQOk5eijqo7CYb0WWoR5MT2+5kEIs=";
 
         nativeBuildInputs = with pkgs; [rustToolchain removeReferencesTo];
 
@@ -47,7 +47,6 @@
     devShells = forEachSupportedSystem ({pkgs}: {
       default = pkgs.mkShell {
         packages = with pkgs; [
-          cargo-audit
           cargo-deny
           cargo-edit
           cargo-watch
