@@ -217,5 +217,6 @@ async fn main() -> Result<()> {
     }
 
     disable_raw_mode()?;
+    println!();
     Ok(())
 }
