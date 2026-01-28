@@ -30,10 +30,10 @@
     packages = forEachSupportedSystem ({pkgs}: {
       default = pkgs.rustPlatform.buildRustPackage {
         pname = "trexanh";
-        version = "0.9.3";
+        version = "0.9.4";
         src = ./.;
 
-        cargoHash = "sha256-xDizikwqqWLFGepQOk5eijqo7CYb0WWoR5MT2+5kEIs=";
+        cargoHash = "sha256-uB1sXh4wCjfRry8ir9dbG4RjSHM6ei5B/81NNa/Omw4=";
 
         nativeBuildInputs = with pkgs; [rustToolchain removeReferencesTo];
 

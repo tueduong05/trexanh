@@ -5,7 +5,7 @@ use crate::config::Config;
 use anyhow::Result;
 use clap::Parser;
 use ratatui::{
-    Terminal,
+    Terminal, TerminalOptions,
     crossterm::{
         event::{self, Event, KeyCode},
         execute,
@@ -159,64 +159,65 @@ async fn main() -> Result<()> {
         }
     }
 
-    enable_raw_mode()?;
-    let stdout = io::stdout();
-    let backend = CrosstermBackend::new(stdout);
-    let mut terminal = Terminal::new(backend)?;
-    terminal.clear()?;
+    if let Some(watch_secs) = args.watch {
+        enable_raw_mode()?;
+        let mut stdout = io::stdout();
+        execute!(stdout, EnterAlternateScreen)?;
 
-    if args.watch.is_some() {
+        let backend = CrosstermBackend::new(stdout);
+        let terminal = Terminal::new(backend)?;
+
         let app = Arc::new(Mutex::new(app));
         let terminal = Arc::new(Mutex::new(terminal));
 
         {
             let app = app.lock().await;
-            let mut terminal = terminal.lock().await;
-            terminal.draw(|f| ui::render(f, &app))?;
+            let mut term = terminal.lock().await;
+            term.draw(|f| ui::render(f, &app))?;
         }
 
-        let interval = Duration::from_secs(args.watch.unwrap());
-
+        let interval = Duration::from_secs(watch_secs);
         let app_clone = Arc::clone(&app);
         let terminal_clone = Arc::clone(&terminal);
 
         tokio::spawn(async move {
             loop {
                 sleep(interval).await;
-
                 {
                     let mut app = app_clone.lock().await;
                     let _ = app.refresh().await;
                 }
-
                 let app = app_clone.lock().await;
-                let mut terminal = terminal_clone.lock().await;
-                let _ = terminal.draw(|f| ui::render(f, &app));
+                let mut term = terminal_clone.lock().await;
+                let _ = term.draw(|f| ui::render(f, &app));
             }
         });
 
         loop {
             if event::poll(Duration::from_millis(200))? {
-                match event::read()? {
-                    Event::Key(key) => {
-                        if key.code == KeyCode::Char('q') {
-                            break;
-                        }
+                if let Event::Key(key) = event::read()? {
+                    if key.code == KeyCode::Char('q') {
+                        break;
                     }
-                    Event::Resize(_, _) => {
-                        let app = app.lock().await;
-                        let mut terminal = terminal.lock().await;
-                        terminal.draw(|f| ui::render(f, &app))?;
-                    }
-                    _ => {}
                 }
             }
         }
+
+        execute!(io::stdout(), LeaveAlternateScreen)?;
+        disable_raw_mode()?;
     } else {
+        let backend = CrosstermBackend::new(io::stdout());
+        let mut terminal = Terminal::with_options(
+            backend,
+            TerminalOptions {
+                viewport: ratatui::Viewport::Inline(13),
+            },
+        )?;
+
         terminal.draw(|frame| ui::render(frame, &app))?;
+
+        println!();
     }
 
-    disable_raw_mode()?;
-    println!();
     Ok(())
 }
