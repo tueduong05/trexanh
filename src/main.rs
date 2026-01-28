@@ -194,12 +194,11 @@ async fn main() -> Result<()> {
         });
 
         loop {
-            if event::poll(Duration::from_millis(200))? {
-                if let Event::Key(key) = event::read()? {
-                    if key.code == KeyCode::Char('q') {
-                        break;
-                    }
-                }
+            if event::poll(Duration::from_millis(200))?
+                && let Event::Key(key) = event::read()?
+                && key.code == KeyCode::Char('q')
+            {
+                break;
             }
         }
 
