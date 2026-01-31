@@ -5,7 +5,7 @@ use crate::config::Config;
 use anyhow::Result;
 use clap::Parser;
 use ratatui::{
-    Terminal, TerminalOptions,
+    Terminal,
     crossterm::{
         event::{self, Event, KeyCode},
         execute,
@@ -13,12 +13,7 @@ use ratatui::{
     },
     prelude::CrosstermBackend,
 };
-use std::{
-    io::{self},
-    process,
-    sync::Arc,
-    time::Duration,
-};
+use std::{io, process, sync::Arc, time::Duration};
 use tokio::{sync::Mutex, time::sleep};
 
 mod api;
@@ -194,29 +189,67 @@ async fn main() -> Result<()> {
         });
 
         loop {
-            if event::poll(Duration::from_millis(200))?
-                && let Event::Key(key) = event::read()?
-                && key.code == KeyCode::Char('q')
-            {
-                break;
+            if event::poll(Duration::from_millis(200))? {
+                match event::read()? {
+                    Event::Key(key) if key.code == KeyCode::Char('q') => break,
+
+                    Event::Resize(_, _) => {
+                        let mut term = terminal.lock().await;
+                        let app = app.lock().await;
+
+                        term.autoresize()?;
+
+                        term.draw(|f| ui::render(f, &app))?;
+                    }
+                    _ => {}
+                }
             }
         }
 
         execute!(io::stdout(), LeaveAlternateScreen)?;
         disable_raw_mode()?;
     } else {
-        let backend = CrosstermBackend::new(io::stdout());
-        let mut terminal = Terminal::with_options(
-            backend,
-            TerminalOptions {
-                viewport: ratatui::Viewport::Inline(13),
-            },
-        )?;
+        let (cols, _) = crossterm::terminal::size().unwrap_or((80, 24));
+        let height = 12;
 
+        let backend = ratatui::backend::TestBackend::new(cols, height);
+        let mut terminal = Terminal::new(backend)?;
         terminal.draw(|frame| ui::render(frame, &app))?;
 
-        println!();
-    }
+        let buffer = terminal.backend().buffer();
 
+        for y in 0..height {
+            let mut line = String::new();
+            let mut last_fg = None;
+            let mut last_bold = false;
+
+            for x in 0..cols {
+                let cell = &buffer[(x, y)];
+                let current_fg = match cell.fg {
+                    ratatui::style::Color::Rgb(r, g, b) => Some((r, g, b)),
+                    _ => None,
+                };
+                let current_bold = cell.modifier.contains(ratatui::style::Modifier::BOLD);
+
+                if current_fg != last_fg || current_bold != last_bold {
+                    line.push_str("\x1b[0m");
+
+                    if let Some((r, g, b)) = current_fg {
+                        line.push_str(&format!("\x1b[38;2;{};{};{}m", r, g, b));
+                    }
+                    if current_bold {
+                        line.push_str("\x1b[1m");
+                    }
+
+                    last_fg = current_fg;
+                    last_bold = current_bold;
+                }
+
+                line.push_str(cell.symbol());
+            }
+
+            println!("{}\x1b[0m", line.trim_end());
+        }
+    }
     Ok(())
 }

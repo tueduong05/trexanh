@@ -12,21 +12,23 @@ fn render_error(frame: &mut Frame, area: Rect, min_width: u16, min_height: u16) 
     let error_message = vec![
         Line::from(Span::styled(
             "Terminal too small!",
-            Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+            Style::default()
+                .fg(Color::Rgb(205, 0, 0))
+                .add_modifier(Modifier::BOLD),
         )),
         Line::from(""),
         Line::from(Span::styled(
             format!("Minimum size: {}x{}", min_width, min_height),
-            Style::default().fg(Color::White),
+            Style::default().fg(Color::Rgb(255, 255, 255)),
         )),
         Line::from(Span::styled(
             format!("Current size: {}x{}", area.width, area.height),
-            Style::default().fg(Color::White),
+            Style::default().fg(Color::Rgb(255, 255, 255)),
         )),
     ];
 
     let paragraph = Paragraph::new(error_message)
-        .style(Style::default().fg(Color::White))
+        .style(Style::default().fg(Color::Rgb(255, 255, 255)))
         .alignment(Alignment::Center)
         .wrap(Wrap { trim: false });
 
@@ -97,10 +99,10 @@ pub fn render_input(frame: &mut Frame, app: &App) {
 
     let user_style = if app.focus == Focus::Username {
         Style::default()
-            .fg(Color::White)
+            .fg(Color::Rgb(255, 255, 255))
             .add_modifier(Modifier::BOLD)
     } else {
-        Style::default().fg(Color::DarkGray)
+        Style::default().fg(Color::Rgb(127, 127, 127))
     };
 
     let username_block = Block::bordered()
@@ -117,10 +119,10 @@ pub fn render_input(frame: &mut Frame, app: &App) {
 
     let token_style = if app.focus == Focus::Token {
         Style::default()
-            .fg(Color::White)
+            .fg(Color::Rgb(255, 255, 255))
             .add_modifier(Modifier::BOLD)
     } else {
-        Style::default().fg(Color::DarkGray)
+        Style::default().fg(Color::Rgb(127, 127, 127))
     };
 
     let token_block = Block::bordered()
@@ -185,7 +187,7 @@ pub fn render(frame: &mut Frame, app: &App) {
     let block = Block::default()
         .title(format!(" trexanh - @{} ", app.config.username))
         .borders(Borders::ALL)
-        .style(Style::default().fg(Color::White));
+        .style(Style::default().fg(Color::Rgb(255, 255, 255)));
 
     let inner = block.inner(calendar_area);
     frame.render_widget(block, calendar_area);
@@ -196,7 +198,7 @@ pub fn render(frame: &mut Frame, app: &App) {
         Span::raw("     "),
         Span::styled(
             get_month_labels(displayed_weeks),
-            Style::default().fg(Color::White),
+            Style::default().fg(Color::Rgb(255, 255, 255)),
         ),
     ]));
 
@@ -213,7 +215,7 @@ pub fn render(frame: &mut Frame, app: &App) {
                 .unwrap()];
             line_spans.push(Span::styled(
                 format!(" {:>3} ", label),
-                Style::default().fg(Color::White),
+                Style::default().fg(Color::Rgb(255, 255, 255)),
             ));
         } else {
             line_spans.push(Span::raw("     "));
@@ -254,7 +256,7 @@ pub fn render(frame: &mut Frame, app: &App) {
     lines.push(Line::from(legend_spans));
 
     let paragraph = Paragraph::new(lines)
-        .style(Style::default().fg(Color::White))
+        .style(Style::default().fg(Color::Rgb(255, 255, 255)))
         .wrap(Wrap { trim: false });
 
     frame.render_widget(paragraph, inner);
