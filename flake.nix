@@ -33,7 +33,7 @@
         version = "0.9.6";
         src = ./.;
 
-        cargoHash = "sha256-j74lEbf8UxiXr+MW6F1wXx3YyGFEcUNyAVvsrQCHg8A=";
+        cargoHash = "sha256-pUod7w1X0i923LknDlBZ8Gz9oSMPM9t7CCsSyWcVW1w=";
 
         nativeBuildInputs = with pkgs; [rustToolchain removeReferencesTo];
 
