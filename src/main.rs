@@ -6,12 +6,16 @@ use anyhow::Result;
 use clap::Parser;
 use ratatui::{
     Terminal,
+    backend::TestBackend,
     crossterm::{
         event::{self, Event, KeyCode},
         execute,
-        terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
+        terminal::{
+            self, EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
+        },
     },
     prelude::CrosstermBackend,
+    style::{Color, Modifier},
 };
 use std::{io, process, sync::Arc, time::Duration};
 use tokio::{sync::Mutex, time::sleep};
@@ -33,6 +37,8 @@ struct Args {
 
     #[arg(long)]
     cached: bool,
+    #[arg(long)]
+    width: Option<u16>,
     #[arg(long)]
     watch: Option<u64>,
 
@@ -209,11 +215,14 @@ async fn main() -> Result<()> {
         execute!(io::stdout(), LeaveAlternateScreen)?;
         disable_raw_mode()?;
     } else {
-        let (cols, _) = crossterm::terminal::size().unwrap_or((80, 24));
+        let (term_cols, _) = terminal::size().unwrap_or((80, 24));
+        let cols = args.width.unwrap_or(term_cols);
+
         let height = 12;
 
-        let backend = ratatui::backend::TestBackend::new(cols, height);
+        let backend = TestBackend::new(cols, height);
         let mut terminal = Terminal::new(backend)?;
+
         terminal.draw(|frame| ui::render(frame, &app))?;
 
         let buffer = terminal.backend().buffer();
@@ -226,10 +235,10 @@ async fn main() -> Result<()> {
             for x in 0..cols {
                 let cell = &buffer[(x, y)];
                 let current_fg = match cell.fg {
-                    ratatui::style::Color::Rgb(r, g, b) => Some((r, g, b)),
+                    Color::Rgb(r, g, b) => Some((r, g, b)),
                     _ => None,
                 };
-                let current_bold = cell.modifier.contains(ratatui::style::Modifier::BOLD);
+                let current_bold = cell.modifier.contains(Modifier::BOLD);
 
                 if current_fg != last_fg || current_bold != last_bold {
                     line.push_str("\x1b[0m");

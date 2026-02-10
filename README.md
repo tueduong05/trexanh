@@ -41,6 +41,11 @@ and input your GitHub username and token
 this flag will instantly display the cached contributions while fetching new data for the next run in the background
 
 ```bash
+./trexanh --width <COLUMNS>
+```
+this flag will let you set custom width for single mode (Minimum: 30)
+
+```bash
 ./trexanh --watch <SECONDS>
 ```
 this flag will continuously fetch and update contributions (**DO NOT** use very short intervals to avoid hammering the GitHub API)
