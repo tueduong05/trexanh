@@ -291,11 +291,12 @@ fn get_month_labels(weeks: &[crate::models::Week]) -> String {
             };
 
             if let Some(target_date) = month_to_label
-                && last_month != Some(target_date.month()) {
-                    let month = target_date.format("%b").to_string();
-                    month_label.push((week_idx, month));
-                    last_month = Some(target_date.month());
-                }
+                && last_month != Some(target_date.month())
+            {
+                let month = target_date.format("%b").to_string();
+                month_label.push((week_idx, month));
+                last_month = Some(target_date.month());
+            }
         }
     }
 
