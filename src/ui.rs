@@ -1,5 +1,5 @@
 use crate::app::{App, Focus};
-use chrono::{Datelike, NaiveDate};
+use chrono::{Datelike, Duration, NaiveDate};
 use ratatui::{
     Frame,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -274,19 +274,28 @@ fn get_contribution_color(count: u32) -> Color {
 
 fn get_month_labels(weeks: &[crate::models::Week]) -> String {
     let mut month_label = Vec::new();
-    let mut last_month: Option<(i32, u32)> = None;
+    let mut last_month: Option<u32> = None;
 
     for (week_idx, week) in weeks.iter().enumerate() {
         if let Some(first_day) = week.contribution_days.first()
             && let Ok(date) = first_day.date.parse::<NaiveDate>()
         {
-            let current_month = (date.year(), date.month());
+            let end_of_week = date + Duration::days(6);
 
-            if last_month != Some(current_month) && date.day() <= 7 {
-                let month = date.format("%b").to_string();
-                month_label.push((week_idx, month));
-                last_month = Some(current_month);
-            }
+            let month_to_label = if date.day() == 1 {
+                Some(date)
+            } else if end_of_week.month() != date.month() {
+                Some(end_of_week)
+            } else {
+                None
+            };
+
+            if let Some(target_date) = month_to_label
+                && last_month != Some(target_date.month()) {
+                    let month = target_date.format("%b").to_string();
+                    month_label.push((week_idx, month));
+                    last_month = Some(target_date.month());
+                }
         }
     }
 

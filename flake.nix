@@ -23,17 +23,17 @@
   in {
     overlays.default = final: prev: {
       rustToolchain = prev.rust-bin.stable.latest.default.override {
-        extensions = ["rust-src" "rustfmt"];
+        extensions = ["clippy" "rust-src" "rustfmt"];
       };
     };
 
     packages = forEachSupportedSystem ({pkgs}: {
       default = pkgs.rustPlatform.buildRustPackage {
         pname = "trexanh";
-        version = "0.9.6";
+        version = "0.9.7";
         src = ./.;
 
-        cargoHash = "sha256-pUod7w1X0i923LknDlBZ8Gz9oSMPM9t7CCsSyWcVW1w=";
+        cargoHash = "sha256-zkPcjM0fZhN08gQXiKukQpFMI+figq5s8M2nSMzZ3kQ=";
 
         nativeBuildInputs = with pkgs; [rustToolchain removeReferencesTo];
 
@@ -48,12 +48,8 @@
       default = pkgs.mkShell {
         packages = with pkgs; [
           cargo-deny
-          cargo-edit
-          cargo-watch
           rust-analyzer
           rustToolchain
-
-          git-cliff
         ];
 
         env = {
