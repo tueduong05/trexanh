@@ -1,0 +1,5 @@
+[tools]
+rust = "stable"
+
+cargo-deny = "latest"
+rust-analyzer = "latest"
